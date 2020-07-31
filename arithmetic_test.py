@@ -1,4 +1,4 @@
-# 2А + B , B - A, and etc 25 tasks for sum and difference, totaly 50 tasks and 50 mintues timer
+# 2А + B , B - A, and etc 25 tasks for sum and difference, totaly 50 tasks and 5 mintues timer
 # В первой шапке может быть и
 # А - 2B
 # и все комбинации с плюсами и минусами и одно из значений удвоенное
