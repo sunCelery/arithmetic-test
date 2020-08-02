@@ -1,4 +1,4 @@
-# 2А + B , B - A, and etc 25 tasks for sum and difference, totaly 50 tasks and 5 mintues timer
+# 2А + B , B - A, and etc 25 tasks for sum and difference, totaly 50 tasks and 5 mintues time_limit
 # В первой шапке может быть и
 # А - 2B
 # и все комбинации с плюсами и минусами и одно из значений удвоенное
@@ -8,8 +8,21 @@ import datetime
 import os
 import random
 import time
+import threading
 
 import matplotlib.pyplot as plt
+
+
+def timer(tik, tok, time_limit=300):
+    elapsed_time = tok-tik
+    if elapsed_time < time_limit:
+        return True
+    else:
+        return False
+
+
+def timesup():
+    print(f'\n\033[1m  Time\'s up  \033[0m')
 
 
 def generate_expression(positive='random', random_coef=False):
@@ -35,37 +48,31 @@ def generate_expression(positive='random', random_coef=False):
     return a, b, expression, sign
 
 
-def ftimer(tik, tok, time_limit=300):
-    elapsed_time = tok-tik
-    if elapsed_time < time_limit:
-        return "Time's up"
-    else:
-        return None
 
 
-def statistic_log(right_answers, total_number_of_tests, elapsed_time):
-    if 'result_loggining.csv' not in os.listdir():
-        with open('result_loggining.csv', 'a') as f:
-            f.write('date, tests completed, % of right answers, elapsed time %m:%s\n')
-    with open('result_loggining.csv', 'a') as f:
-        f.write(f'{datetime.datetime.now():%Y/%m/%d %H:%M:%S}, '
-                f'{right_answers}/{total_number_of_tests}, '
-                f'{int(right_answers / total_number_of_tests * 100)}, '
-                f'{int(elapsed_time // 60)}:{int(elapsed_time % 60)}\n')
-
-
-def print_test_statistic(start_time, right_answers, total_number_of_tests):
+def print_test_statistic(start_time, right_answers, total_number_of_tests, expressions):
     end_time = time.monotonic()
     elapsed_time = end_time - start_time
     print(f'\n'
           f'time elapsed: {int(elapsed_time//60)} minutes, {int(elapsed_time%60)} seconds\n'
           f'tests completed: {right_answers}/{total_number_of_tests}, {int(right_answers/total_number_of_tests*100)}%')
-    return statistic_log(right_answers, total_number_of_tests, elapsed_time)
+    return statistic_log(right_answers, total_number_of_tests, elapsed_time, expressions)
 
 
-def timesup():
-    print(f'\n\033[1m  Time\'s up  \033[0m')
-    print_test_statistic(start_time, right_answers, total_number_of_tests)
+def statistic_log(right_answers, total_number_of_tests, elapsed_time, expressions):
+    if 'result_loggining.csv' not in os.listdir():
+        with open('result_loggining.csv', 'a') as f:
+            f.write('date, tests completed, % of right answers, elapsed time %m:%s, exp1, exp2\n')
+    with open('result_loggining.csv', 'a') as f:
+        f.write(f'{datetime.datetime.now():%Y/%m/%d %H:%M}, '
+                f'{right_answers}/{total_number_of_tests}, '
+                f'{int(right_answers / total_number_of_tests * 100)}, '
+                f'{int(elapsed_time // 60)}:{int(elapsed_time % 60)}, '
+                f'{expressions[0]}')
+        try:
+            f.write(f', {expressions[1]}\n')
+        except IndexError:
+            f.write(f'\n')
 
 
 def show_plot():
@@ -89,15 +96,17 @@ def show_plot():
         # add here csv reader bla bal bla
 
 
-def main(digits_from=5, digits_to=99, total_number_of_tests=50, timer=300):
+def main(digits_from=5, digits_to=99, total_number_of_tests=50, time_limit=300):
     total_number_of_tests = total_number_of_tests // 2 * 2
     right_answers = 0
     start_time = time.monotonic()
+    expressions = []
     for random_coef in (True, False):
         a, b, expression, sign = generate_expression(random_coef=random_coef)
+        expressions.append(expression)
         print(f'\n\033[1m  {expression}  \033[0m\n')
         for i in range(total_number_of_tests//2):
-            if ftimer(start_time, time.monotonic(), timer):
+            if timer(start_time, time.monotonic(), time_limit):
                 if random_coef:
                     A = random.randrange(digits_from, digits_to)
                     B = random.randrange(digits_from, digits_to)
@@ -110,15 +119,17 @@ def main(digits_from=5, digits_to=99, total_number_of_tests=50, timer=300):
                     if temp == round(float(input()), 2):
                         right_answers += 1
                     else:
-                        print(f' <right answer: {temp}> ', end=' ')
+                        print(f'<right answer: {temp}> ')
                 except ValueError:
                     continue
             else:
                 timesup()
+                print_test_statistic(start_time, right_answers, total_number_of_tests, expressions)
                 return None
-    print_test_statistic(start_time, right_answers, total_number_of_tests)
-    show_plot()
+    print_test_statistic(start_time, right_answers, total_number_of_tests, expressions)
+    # show_plot()
 
 
 if __name__ == '__main__':
-    main(digits_from=5, digits_to=99, total_number_of_tests=2, timer=300)
+    # threading.Timer(5, print('hello world')).start()
+    main(digits_from=5, digits_to=99, total_number_of_tests=4, time_limit=6)
