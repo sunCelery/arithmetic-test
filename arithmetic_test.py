@@ -7,6 +7,7 @@ import csv
 import datetime
 import os
 import random
+import sys
 import time
 import threading
 
@@ -104,7 +105,7 @@ def main(digits_from=5, digits_to=99, total_number_of_tests=50, time_limit=300):
     for random_coef in (True, False):
         a, b, expression, sign = generate_expression(random_coef=random_coef)
         expressions.append(expression)
-        print(f'\n\033[1m  {expression}  \033[0m\n')
+        print(f'\n\033[1m  {expression}  \033[0m\n\n')
         for i in range(total_number_of_tests//2):
             if timer(start_time, time.monotonic(), time_limit):
                 if random_coef:
@@ -113,13 +114,14 @@ def main(digits_from=5, digits_to=99, total_number_of_tests=50, time_limit=300):
                 else:
                     A = random.randrange(digits_from, eval(str(digits_to) + '99')) / 100
                     B = random.randrange(digits_from, eval(str(digits_to) + '99')) / 100
-                print(f'{A}, {B}: ', end='')
+                sys.stdout.write(f'\u001b[1A'
+                                 f'\u001b[2D'
+                                 f'{A}, {B}:           \u001b[10D')
+                sys.stdout.flush()
                 temp = round(eval(f'{a * A} {sign} {b * B}'), 2)
                 try:
                     if temp == round(float(input()), 2):
                         right_answers += 1
-                    else:
-                        print(f'<right answer: {temp}> ')
                 except ValueError:
                     continue
             else:
@@ -132,4 +134,4 @@ def main(digits_from=5, digits_to=99, total_number_of_tests=50, time_limit=300):
 
 if __name__ == '__main__':
     # threading.Timer(5, print('hello world')).start()
-    main(digits_from=5, digits_to=99, total_number_of_tests=4, time_limit=6)
+    main(digits_from=5, digits_to=99, total_number_of_tests=50, time_limit=300)
