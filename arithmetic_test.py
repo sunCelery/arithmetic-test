@@ -3,7 +3,6 @@
 # А - 2B
 # и все комбинации с плюсами и минусами и одно из значений удвоенное
 
-import csv
 import datetime
 import os
 import random
@@ -49,14 +48,26 @@ def generate_expression(positive='random', random_coef=False):
     return a, b, expression, sign
 
 
-
-
 def print_test_statistic(start_time, right_answers, total_number_of_tests, expressions):
     end_time = time.monotonic()
     elapsed_time = end_time - start_time
+    headers = ('date', 'tests completed', '% of right answers', 'elapsed time (minutes)', 'exp1', 'exp2')
     print(f'\n'
-          f'time elapsed: {int(elapsed_time//60)} minutes, {int(elapsed_time%60)} seconds\n'
-          f'tests completed: {right_answers}/{total_number_of_tests}, {int(right_answers/total_number_of_tests*100)}%')
+          f'{headers[0]:16} | '
+          f'{headers[1]:15} | '
+          f'{headers[2]:19} | '
+          f'{headers[3]:22} | '
+          f'{headers[4]:7} | '
+          f'{headers[5]:7} | ')
+    print(f'{datetime.datetime.now():%Y/%m/%d %H:%M} | '
+          f'{str(right_answers) + "/" + str(total_number_of_tests):15} | '
+          f'{int(right_answers / total_number_of_tests * 100):19} | '
+          f'{str(int(elapsed_time // 60)) + ":" + str(int(elapsed_time % 60)):22} | '
+          f'{expressions[0]:7} | ', end='')
+    try:
+        print(f'{expressions[1]:7} |')
+    except IndexError:
+        print()
     return statistic_log(right_answers, total_number_of_tests, elapsed_time, expressions)
 
 
@@ -78,7 +89,7 @@ def statistic_log(right_answers, total_number_of_tests, elapsed_time, expression
 
 def show_plot():
     with open('result_loggining.csv') as data:
-        headers = data.readline().split(', ')  # datetime, tests completed, % of right answers, elapsed time %m:%s
+        headers = data.readline().split(', ')
         date_of_test = []
         test_completed = []
         percent_of_right_answers = []
@@ -93,8 +104,6 @@ def show_plot():
         fig, axs = plt.subplots(1, 1, figsize=(9, 3), sharey=True)
         axs[0].plot(percent_of_right_answers, elapsed_time)
         fig.suptitle('Categorical Plotting')
-
-        # add here csv reader bla bal bla
 
 
 def main(digits_from=5, digits_to=99, total_number_of_tests=50, time_limit=300):
