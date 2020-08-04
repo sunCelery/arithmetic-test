@@ -1,14 +1,8 @@
-# 2А + B , B - A, and etc 25 tasks for sum and difference, totaly 50 tasks and 5 mintues time_limit
-# В первой шапке может быть и
-# А - 2B
-# и все комбинации с плюсами и минусами и одно из значений удвоенное
-
 import datetime
 import os
 import random
 import sys
 import time
-import threading
 
 import matplotlib.pyplot as plt
 
@@ -48,24 +42,26 @@ def generate_expression(positive='random', random_coef=False):
     return a, b, expression, sign
 
 
-def print_test_statistic(start_time, right_answers, total_number_of_tests, expressions):
+def print_test_statistic(start_time, right_answers, total_number_of_tests, expressions, time_limit):
     end_time = time.monotonic()
     elapsed_time = end_time - start_time
+    elapsed_time = elapsed_time if elapsed_time <= time_limit else time_limit
     headers = ('date', 'tests completed', '% of right answers', 'elapsed time (minutes)', 'exp1', 'exp2')
+    elapsed_time_str = f'{int(elapsed_time // 60):02}:{int(elapsed_time % 60):02}'
     print(f'\n'
           f'{headers[0]:16} | '
           f'{headers[1]:15} | '
           f'{headers[2]:19} | '
           f'{headers[3]:22} | '
-          f'{headers[4]:7} | '
-          f'{headers[5]:7} | ')
+          f'{headers[4]:6} | '
+          f'{headers[5]:6} | ')
     print(f'{datetime.datetime.now():%Y/%m/%d %H:%M} | '
-          f'{str(right_answers) + "/" + str(total_number_of_tests):15} | '
-          f'{int(right_answers / total_number_of_tests * 100):19} | '
-          f'{str(int(elapsed_time // 60)) + ":" + str(int(elapsed_time % 60)):22} | '
-          f'{expressions[0]:7} | ', end='')
+          f'{str(right_answers) + "/" + str(total_number_of_tests):>15} | '
+          f'{int(right_answers / total_number_of_tests * 100):>19} | '
+          f'{elapsed_time_str:>22} | '
+          f'{expressions[0]:6} | ', end='')
     try:
-        print(f'{expressions[1]:7} |')
+        print(f'{expressions[1]:6} |')
     except IndexError:
         print()
     return statistic_log(right_answers, total_number_of_tests, elapsed_time, expressions)
@@ -78,32 +74,13 @@ def statistic_log(right_answers, total_number_of_tests, elapsed_time, expression
     with open('result_loggining.csv', 'a') as f:
         f.write(f'{datetime.datetime.now():%Y/%m/%d %H:%M}, '
                 f'{right_answers}/{total_number_of_tests}, '
-                f'{int(right_answers / total_number_of_tests * 100)}, '
-                f'{int(elapsed_time // 60)}:{int(elapsed_time % 60)}, '
+                f'{round(right_answers / total_number_of_tests * 100)}, '
+                f'{int(elapsed_time // 60):02}:{int(elapsed_time % 60):02}, '
                 f'{expressions[0]}')
         try:
             f.write(f', {expressions[1]}\n')
         except IndexError:
             f.write(f'\n')
-
-
-def show_plot():
-    with open('result_loggining.csv') as data:
-        headers = data.readline().split(', ')
-        date_of_test = []
-        test_completed = []
-        percent_of_right_answers = []
-        elapsed_time = []
-        for line in data.readline():
-            print(line.split(', '))
-            temp = line.split(', ')
-            date_of_test.append(temp[0])
-            test_completed.append(temp[1])
-            percent_of_right_answers.append(temp[2])
-            elapsed_time.append(temp[3])
-        fig, axs = plt.subplots(1, 1, figsize=(9, 3), sharey=True)
-        axs[0].plot(percent_of_right_answers, elapsed_time)
-        fig.suptitle('Categorical Plotting')
 
 
 def main(digits_from=5, digits_to=99, total_number_of_tests=50, time_limit=300):
@@ -129,18 +106,16 @@ def main(digits_from=5, digits_to=99, total_number_of_tests=50, time_limit=300):
                 sys.stdout.flush()
                 temp = round(eval(f'{a * A} {sign} {b * B}'), 2)
                 try:
-                    if temp == round(float(input()), 2):
+                    if temp == round(float(input()), 2) and timer(start_time, time.monotonic(), time_limit):
                         right_answers += 1
                 except ValueError:
                     continue
             else:
                 timesup()
-                print_test_statistic(start_time, right_answers, total_number_of_tests, expressions)
+                print_test_statistic(start_time, right_answers, total_number_of_tests, expressions, time_limit)
                 return None
-    print_test_statistic(start_time, right_answers, total_number_of_tests, expressions)
-    # show_plot()
+    print_test_statistic(start_time, right_answers, total_number_of_tests, expressions, time_limit)
 
 
 if __name__ == '__main__':
-    # threading.Timer(5, print('hello world')).start()
     main(digits_from=5, digits_to=99, total_number_of_tests=50, time_limit=300)
