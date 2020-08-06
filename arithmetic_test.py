@@ -4,7 +4,9 @@ import random
 import sys
 import time
 
-import matplotlib.pyplot as plt
+
+class WrongAnswerError(Exception):
+    pass
 
 
 def timer(tik, tok, time_limit=300):
@@ -42,7 +44,7 @@ def generate_expression(positive='random', random_coef=False):
     return a, b, expression, sign
 
 
-def print_test_statistic(start_time, right_answers, total_number_of_tests, expressions, time_limit):
+def print_test_statistic(start_time, right_answers, total_number_of_tests, expressions, time_limit, wrong_answers):
     end_time = time.monotonic()
     elapsed_time = end_time - start_time
     elapsed_time = elapsed_time if elapsed_time <= time_limit else time_limit
@@ -57,13 +59,15 @@ def print_test_statistic(start_time, right_answers, total_number_of_tests, expre
           f'{headers[5]:6} | ')
     print(f'{datetime.datetime.now():%Y/%m/%d %H:%M} | '
           f'{str(right_answers) + "/" + str(total_number_of_tests):>15} | '
-          f'{int(right_answers / total_number_of_tests * 100):>19} | '
+          f'{round(right_answers / total_number_of_tests * 100):>19} | '
           f'{elapsed_time_str:>22} | '
           f'{expressions[0]:6} | ', end='')
     try:
-        print(f'{expressions[1]:6} |')
+        print(f'{expressions[1]:6} |\n')
     except IndexError:
-        print()
+        print('\n')
+    [print(f'{key:15}: right answer: {wrong_answers[key][0]:7}, given answer: '
+           f'{wrong_answers[key][1]:7}') for key in wrong_answers]
     return statistic_log(right_answers, total_number_of_tests, elapsed_time, expressions)
 
 
@@ -88,6 +92,7 @@ def main(digits_from=5, digits_to=99, total_number_of_tests=50, time_limit=300):
     right_answers = 0
     start_time = time.monotonic()
     expressions = []
+    wrong_answers = {}
     for random_coef in (True, False):
         a, b, expression, sign = generate_expression(random_coef=random_coef)
         expressions.append(expression)
@@ -104,18 +109,28 @@ def main(digits_from=5, digits_to=99, total_number_of_tests=50, time_limit=300):
                                  f'\u001b[2D'
                                  f'{A}, {B}:           \u001b[10D')
                 sys.stdout.flush()
-                temp = round(eval(f'{a * A} {sign} {b * B}'), 2)
+                right_answer = round(eval(f'{a * A} {sign} {b * B}'), 2)
                 try:
-                    if temp == round(float(input()), 2) and timer(start_time, time.monotonic(), time_limit):
+                    given_answer = round(float(input()), 2)
+                    if right_answer == given_answer and timer(start_time, time.monotonic(), time_limit):
                         right_answers += 1
+                    elif right_answer != given_answer:
+                        raise WrongAnswerError
                 except ValueError:
+                    given_answer = ''
+                    wrong_answers[f'{expression} ({A}, {B})' ] = (right_answer, given_answer)
+                    continue
+                except WrongAnswerError:
+                    wrong_answers[f'{expression} ({A}, {B})' ] = (right_answer, given_answer)
                     continue
             else:
                 timesup()
-                print_test_statistic(start_time, right_answers, total_number_of_tests, expressions, time_limit)
+                print_test_statistic(start_time, right_answers, total_number_of_tests,
+                                     expressions, time_limit, wrong_answers)
                 return None
-    print_test_statistic(start_time, right_answers, total_number_of_tests, expressions, time_limit)
+    print_test_statistic(start_time, right_answers, total_number_of_tests,
+                         expressions, time_limit, wrong_answers)
 
 
 if __name__ == '__main__':
-    main(digits_from=5, digits_to=99, total_number_of_tests=50, time_limit=300)
+    main(digits_from=5, digits_to=99, total_number_of_tests=50, time_limit=10)
