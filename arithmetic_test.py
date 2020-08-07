@@ -44,41 +44,44 @@ def generate_expression(positive='random', random_coef=False):
     return a, b, expression, sign
 
 
-def print_test_statistic(start_time, right_answers, total_number_of_tests, expressions, time_limit, wrong_answers):
+def print_test_statistic(start_time, right_answers: int, total_number_of_tests: int,
+                         expressions: str, time_limit: int, wrong_answers: dict):
     end_time = time.monotonic()
     elapsed_time = end_time - start_time
     elapsed_time = elapsed_time if elapsed_time <= time_limit else time_limit
-    headers = ('date', 'tests completed', '% of right answers', 'elapsed time (minutes)', 'exp1', 'exp2')
+    headers = ('date', 'tests completed', 'accuracy %', 'elapsed time (minutes)', 'exp1', 'exp2')
     elapsed_time_str = f'{int(elapsed_time // 60):02}:{int(elapsed_time % 60):02}'
+    zero_division = 1 if right_answers == 0 else 0
     print(f'\n'
           f'{headers[0]:16} | '
           f'{headers[1]:15} | '
-          f'{headers[2]:19} | '
+          f'{headers[2]:10} | '
           f'{headers[3]:22} | '
           f'{headers[4]:6} | '
           f'{headers[5]:6} | ')
     print(f'{datetime.datetime.now():%Y/%m/%d %H:%M} | '
           f'{str(right_answers) + "/" + str(total_number_of_tests):>15} | '
-          f'{round(right_answers / total_number_of_tests * 100):>19} | '
+          f'{round(((right_answers) / (zero_division + right_answers + len(wrong_answers)) * 100)):>10} | '
           f'{elapsed_time_str:>22} | '
           f'{expressions[0]:6} | ', end='')
     try:
         print(f'{expressions[1]:6} |\n')
     except IndexError:
         print('\n')
-    [print(f'{key:15}: right answer: {wrong_answers[key][0]:7}, given answer: '
-           f'{wrong_answers[key][1]:7}') for key in wrong_answers]
-    return statistic_log(right_answers, total_number_of_tests, elapsed_time, expressions)
+    for key in wrong_answers:
+        print(f'{key:15}: right answer: {wrong_answers[key][0]:7}, given answer: {wrong_answers[key][1]:7}')
+    return statistic_log(right_answers, total_number_of_tests, elapsed_time, expressions, wrong_answers)
 
 
-def statistic_log(right_answers, total_number_of_tests, elapsed_time, expressions):
+def statistic_log(right_answers, total_number_of_tests, elapsed_time, expressions, wrong_answers):
     if 'result_loggining.csv' not in os.listdir():
         with open('result_loggining.csv', 'a') as f:
-            f.write('date, tests completed, % of right answers, elapsed time %m:%s, exp1, exp2\n')
+            f.write('date, tests completed, accuracy %, elapsed time minutes, exp1, exp2\n')
+    zero_division = 1 if right_answers == 0 else 0
     with open('result_loggining.csv', 'a') as f:
         f.write(f'{datetime.datetime.now():%Y/%m/%d %H:%M}, '
                 f'{right_answers}/{total_number_of_tests}, '
-                f'{round(right_answers / total_number_of_tests * 100)}, '
+                f'{round(((right_answers) / (zero_division + right_answers + len(wrong_answers)) * 100)):>10}, '
                 f'{int(elapsed_time // 60):02}:{int(elapsed_time % 60):02}, '
                 f'{expressions[0]}')
         try:
@@ -114,14 +117,15 @@ def main(digits_from=5, digits_to=99, total_number_of_tests=50, time_limit=300):
                     given_answer = round(float(input()), 2)
                     if right_answer == given_answer and timer(start_time, time.monotonic(), time_limit):
                         right_answers += 1
-                    elif right_answer != given_answer:
+                    elif right_answer != given_answer and timer(start_time, time.monotonic(), time_limit):
                         raise WrongAnswerError
-                except ValueError:
-                    given_answer = ''
-                    wrong_answers[f'{expression} ({A}, {B})' ] = (right_answer, given_answer)
-                    continue
                 except WrongAnswerError:
                     wrong_answers[f'{expression} ({A}, {B})' ] = (right_answer, given_answer)
+                    continue
+                except ValueError:
+                    if timer(start_time, time.monotonic(), time_limit):
+                        given_answer = ''
+                        wrong_answers[f'{expression} ({A}, {B})' ] = (right_answer, given_answer)
                     continue
             else:
                 timesup()
@@ -133,4 +137,4 @@ def main(digits_from=5, digits_to=99, total_number_of_tests=50, time_limit=300):
 
 
 if __name__ == '__main__':
-    main(digits_from=5, digits_to=99, total_number_of_tests=50, time_limit=10)
+    main(digits_from=5, digits_to=99, total_number_of_tests=50, time_limit=300)
