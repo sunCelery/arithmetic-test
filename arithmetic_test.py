@@ -69,7 +69,7 @@ def print_test_statistic(start_time, right_answers: int, total_number_of_tests: 
     except IndexError:
         print('\n')
     for key in wrong_answers:
-        print(f'{key:15}: right answer: {wrong_answers[key][0]:7}, given answer: {wrong_answers[key][1]:7}')
+        print(f'{key:20} right answer:{wrong_answers[key][0]:^7} given answer:{wrong_answers[key][1]:^7}')
     return statistic_log(right_answers, total_number_of_tests, elapsed_time, expressions, wrong_answers)
 
 
@@ -81,7 +81,7 @@ def statistic_log(right_answers, total_number_of_tests, elapsed_time, expression
     with open('result_loggining.csv', 'a') as f:
         f.write(f'{datetime.datetime.now():%Y/%m/%d %H:%M}, '
                 f'{right_answers}/{total_number_of_tests}, '
-                f'{round(((right_answers) / (zero_division + right_answers + len(wrong_answers)) * 100)):>10}, '
+                f'{round(((right_answers) / (zero_division + right_answers + len(wrong_answers)) * 100))}, '
                 f'{int(elapsed_time // 60):02}:{int(elapsed_time % 60):02}, '
                 f'{expressions[0]}')
         try:
