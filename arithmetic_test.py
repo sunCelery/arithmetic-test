@@ -5,12 +5,8 @@ import sys
 import time
 
 
-class WrongAnswerError(Exception):
-    pass
-
-
-def timer(tik, tok, time_limit=300):
-    elapsed_time = tok-tik
+def there_is_time(tik, tok, time_limit=300):
+    elapsed_time = tok - tik
     if elapsed_time < time_limit:
         return True
     else:
@@ -45,7 +41,7 @@ def generate_expression(positive='random', random_coef=False):
 
 
 def print_test_statistic(start_time, right_answers: int, total_number_of_tests: int,
-                         expressions: str, time_limit: int, wrong_answers: dict):
+                         expressions: str, time_limit: int, wrong_answers: dict, logging=True):
     end_time = time.monotonic()
     elapsed_time = end_time - start_time
     elapsed_time = elapsed_time if elapsed_time <= time_limit else time_limit
@@ -70,7 +66,8 @@ def print_test_statistic(start_time, right_answers: int, total_number_of_tests: 
         print('\n')
     for key in wrong_answers:
         print(f'{key:20} right answer:{wrong_answers[key][0]:^7} given answer:{wrong_answers[key][1]:^7}')
-    return statistic_log(right_answers, total_number_of_tests, elapsed_time, expressions, wrong_answers)
+    if logging:
+        return statistic_log(right_answers, total_number_of_tests, elapsed_time, expressions, wrong_answers)
 
 
 def statistic_log(right_answers, total_number_of_tests, elapsed_time, expressions, wrong_answers):
@@ -101,7 +98,7 @@ def main(digits_from=5, digits_to=99, total_number_of_tests=50, time_limit=300):
         expressions.append(expression)
         print(f'\n\033[1m  {expression}  \033[0m\n\n')
         for i in range(total_number_of_tests//2):
-            if timer(start_time, time.monotonic(), time_limit):
+            if there_is_time(start_time, time.monotonic(), time_limit):
                 if random_coef:
                     A = random.randrange(digits_from, digits_to)
                     B = random.randrange(digits_from, digits_to)
@@ -115,18 +112,23 @@ def main(digits_from=5, digits_to=99, total_number_of_tests=50, time_limit=300):
                 right_answer = round(eval(f'{a * A} {sign} {b * B}'), 2)
                 try:
                     given_answer = round(float(input()), 2)
-                    if right_answer == given_answer and timer(start_time, time.monotonic(), time_limit):
+                    if right_answer == given_answer and there_is_time(start_time, time.monotonic(), time_limit):
                         right_answers += 1
-                    elif right_answer != given_answer and timer(start_time, time.monotonic(), time_limit):
-                        raise WrongAnswerError
-                except WrongAnswerError:
+                    elif right_answer != given_answer and there_is_time(start_time, time.monotonic(), time_limit):
+                        raise ArithmeticError
+                except ArithmeticError:
                     wrong_answers[f'{expression} ({A}, {B})' ] = (right_answer, given_answer)
                     continue
                 except ValueError:
-                    if timer(start_time, time.monotonic(), time_limit):
+                    if there_is_time(start_time, time.monotonic(), time_limit):
                         given_answer = ''
                         wrong_answers[f'{expression} ({A}, {B})' ] = (right_answer, given_answer)
                     continue
+                except KeyboardInterrupt:
+                    print()
+                    print_test_statistic(start_time, right_answers, total_number_of_tests,
+                                         expressions, time_limit, wrong_answers, logging=False)
+                    return None
             else:
                 timesup()
                 print_test_statistic(start_time, right_answers, total_number_of_tests,
