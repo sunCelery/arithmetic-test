@@ -1,0 +1,3 @@
+# arithmetic-test
+This program allow to train your calculate ability
+etc...
